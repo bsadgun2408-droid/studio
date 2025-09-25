@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAuth, sendEmailVerification, User } from "firebase/auth";
+import { getAuth, sendEmailVerification, User, sendPasswordResetEmail } from "firebase/auth";
 import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { LoaderCircle } from "lucide-react";
 
@@ -20,6 +20,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -34,12 +44,20 @@ const formSchema = z.object({
   }),
 });
 
+const passwordResetSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+});
+
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = getAuth();
   const [signInWithEmailAndPassword, user, loading, error] = useSignInWithEmailAndPassword(auth);
   const [unverifiedUser, setUnverifiedUser] = React.useState<User | null>(null);
+  const [isResetting, setIsResetting] = React.useState(false);
+  const [resetEmail, setResetEmail] = React.useState('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -81,9 +99,6 @@ export function LoginForm() {
             description: "Please verify your email address before logging in.",
             variant: "destructive",
           });
-          // Note: react-firebase-hooks automatically signs the user out if there's an error during sign-in process,
-          // but if they are technically "signed in" but not verified, we might need to sign them out manually.
-          // For now, react-firebase-hooks seems to handle this state.
           return;
         }
 
@@ -112,6 +127,43 @@ export function LoginForm() {
         });
     }
   }
+  
+  const handlePasswordReset = async () => {
+    const result = passwordResetSchema.safeParse({ email: resetEmail });
+    if (!result.success) {
+      toast({
+        title: "Invalid Email",
+        description: result.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your inbox for a link to reset your password.",
+      });
+      setResetEmail('');
+      // Close dialog if open
+      document.getElementById('close-reset-dialog')?.click();
+    } catch (e: any) {
+       let errorMessage = "Failed to send password reset email.";
+        if (e.code === 'auth/user-not-found') {
+          errorMessage = "No account found with this email address.";
+        }
+       toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  }
+
 
   React.useEffect(() => {
     if (error) {
@@ -138,7 +190,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -157,7 +209,42 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Password</FormLabel>
+                     <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="link" className="p-0 h-auto text-xs text-primary">
+                          Forgot Password?
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Reset Password</DialogTitle>
+                          <DialogDescription>
+                            Enter your email address and we&apos;ll send you a link to reset your password.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <Input
+                            id="reset-email"
+                            placeholder="name@example.com"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            disabled={isResetting}
+                          />
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button variant="ghost" id="close-reset-dialog">Cancel</Button>
+                            </DialogClose>
+                            <Button onClick={handlePasswordReset} disabled={isResetting}>
+                                {isResetting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                Send Reset Link
+                            </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
