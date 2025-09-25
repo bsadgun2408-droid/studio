@@ -317,7 +317,7 @@ export default function DashboardPage() {
             <Card className="max-w-xl">
               <CardContent className="p-3 flex items-center gap-2">
                 <LoaderCircle className="w-5 h-5 animate-spin" />
-                <span>Generating study materials...</span>
+                <span>Thinking...</span>
               </CardContent>
             </Card>
           </div>
@@ -385,5 +385,3 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
-
-    
