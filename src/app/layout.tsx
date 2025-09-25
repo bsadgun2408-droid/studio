@@ -3,9 +3,10 @@ import {PT_Sans} from 'next/font/google';
 import './globals.css';
 import {cn} from '@/lib/utils';
 import {Toaster} from '@/components/ui/toaster';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'EduAI Companion',
+  title: 'EduVault AI',
   description: 'An expert AI tutor for Class 10 CBSE curriculum and general education topics.',
 };
 
@@ -33,8 +34,10 @@ export default function RootLayout({
           ptSans.variable
         )}
       >
-        {children}
-        <Toaster />
+        <FirebaseClientProvider>
+            {children}
+            <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

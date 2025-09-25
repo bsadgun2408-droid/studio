@@ -12,7 +12,7 @@ export default function SignupPage() {
             Create an Account
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Join EduAI Companion and start your personalized learning journey.
+            Join EduVault AI and start your personalized learning journey.
           </p>
           <div className="mt-8">
             <SignupForm />
