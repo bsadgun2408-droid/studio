@@ -21,27 +21,17 @@ const ChatOutputSchema = z.object({
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const prompt = ai.definePrompt(
-    {
-      name: 'chatPrompt',
-      input: {schema: ChatInputSchema},
-      output: {schema: ChatOutputSchema},
-      prompt: `You are an expert AI tutor for Class 10 CBSE curriculum and general education topics.
+  const llmResponse = await ai.generate({
+    prompt: `You are an expert AI tutor for Class 10 CBSE curriculum and general education topics.
   
   Please provide a helpful and accurate response to the following prompt:
-  {{{prompt}}}
+  ${input.prompt}
   `,
+    model: 'googleai/gemini-2.5-flash',
+    output: {
+      schema: ChatOutputSchema,
     },
-    async input => {
-      const llmResponse = await ai.generate({
-        prompt: input.prompt,
-        model: 'googleai/gemini-2.5-flash',
-        output: {
-            schema: ChatOutputSchema,
-        },
-      });
-      return llmResponse.output!;
-    }
-  );
-  return await prompt(input);
+  });
+
+  return llmResponse.output!;
 }
