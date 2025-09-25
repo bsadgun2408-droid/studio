@@ -385,5 +385,4 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
-
-    
+}
