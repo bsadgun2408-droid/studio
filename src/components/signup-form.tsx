@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAuth, sendEmailVerification } from "firebase/auth";
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
-import { doc, setDoc, getFirestore, getDocs, collection, query, where } from 'firebase/firestore';
+import { doc, setDoc, getFirestore } from 'firebase/firestore';
 import { LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
 const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"];
+const ADMIN_EMAIL = "bsadgun2408@gmail.com";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -35,10 +36,11 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }).refine(email => {
+    if (email === ADMIN_EMAIL) return false;
     const domain = email.split('@')[1];
     return allowedDomains.includes(domain);
   }, {
-    message: "This email domain is not allowed. Please use a valid provider."
+    message: "This email address is not allowed."
   }),
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
@@ -62,24 +64,21 @@ export function SignupForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      // Check if username already exists
-      const usersRef = collection(firestore, "users");
-      const q = query(usersRef, where("name", "==", values.name));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
+    if (values.email.toLowerCase() === ADMIN_EMAIL) {
         toast({
-          title: "Registration Failed",
-          description: "This username is already taken. Please choose another one.",
-          variant: "destructive",
+            title: "Registration Failed",
+            description: "This email address is reserved and cannot be used for registration.",
+            variant: "destructive",
         });
         return;
-      }
-      
+    }
+
+    try {
       const newUser = await createUserWithEmailAndPassword(values.email, values.password);
       if (newUser) {
-        await sendEmailVerification(newUser.user);
+        if(newUser.user.email !== ADMIN_EMAIL) {
+            await sendEmailVerification(newUser.user);
+        }
         
         // Store user info in Firestore
         const userRef = doc(firestore, "users", newUser.user.uid);
@@ -89,7 +88,7 @@ export function SignupForm() {
             email: values.email,
             isBanned: false,
             createdAt: new Date(),
-            isVerified: false // Explicitly set verification status
+            isVerified: newUser.user.email === ADMIN_EMAIL ? true : false,
         };
 
         setDoc(userRef, userData).catch(serverError => {
