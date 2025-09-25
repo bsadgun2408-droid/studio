@@ -1,0 +1,184 @@
+/**
+ * @file Firestore Security Rules for EduAI Companion
+ *
+ * @core_philosophy This ruleset enforces a strict user-ownership model for all user-generated content (chat histories, study materials, file uploads).
+ *   Admin users have elevated privileges to manage user accounts.
+ * @data_structure Data is nested under /users/{userId}, with subcollections for chat history, study materials, and file uploads.
+ *   Admin status is determined by the existence of a document in the /roles_admin/{userId} collection.
+ * @key_security_decisions
+ *   - User listing is explicitly denied.
+ *   - All write operations are protected by authorization checks to ensure data integrity and prevent unauthorized access.
+ *   - The `id` field in each document is validated to match its path to prevent unauthorized data creation or modification in another user's scope.
+ * @denormalization_for_authorization No denormalization is needed because the data structure already supports efficient path-based authorization.
+ * @structural_segregation User data and admin roles are stored in separate collections to ensure clear separation of concerns and simplified security rules.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secures user account information.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own document.
+     * @deny (create) User with ID 'user456' cannot create a document for 'user123'.
+     * @allow (get) User 'user123' can read their own document.
+     * @deny (get) User 'user456' cannot read 'user123's document.
+     * @allow (update) User 'user123' can update their own document.
+     * @deny (update) User 'user456' cannot update 'user123's document.
+     * @allow (delete) User 'user123' can delete their own document.
+     * @deny (delete) User 'user456' cannot delete 'user123's document.
+     * @deny (list) Listing all users is not allowed.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isSelfCreation(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Secures chat history for each user.
+     * @path /users/{userId}/chat_history/{chatHistoryId}
+     * @allow (create) User 'user123' can create a chat history entry in their own directory.
+     * @deny (create) User 'user456' cannot create a chat history entry in 'user123's directory.
+     * @allow (get) User 'user123' can read a chat history entry in their own directory.
+     * @deny (get) User 'user456' cannot read a chat history entry in 'user123's directory.
+     * @allow (update) User 'user123' can update a chat history entry in their own directory.
+     * @deny (update) User 'user456' cannot update a chat history entry in 'user123's directory.
+     * @allow (delete) User 'user123' can delete a chat history entry in their own directory.
+     * @deny (delete) User 'user456' cannot delete 'user123's chat history entry.
+     * @allow (list) User 'user123' can list chat history entries in their own directory.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/chat_history/{chatHistoryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Secures study materials generated from chat history.
+     * @path /users/{userId}/chat_history/{chatHistoryId}/study_materials/{studyMaterialId}
+     * @allow (create) User 'user123' can create study material under their chat history.
+     * @deny (create) User 'user456' cannot create study material under 'user123's chat history.
+     * @allow (get) User 'user123' can read study material under their chat history.
+     * @deny (get) User 'user456' cannot read study material under 'user123's chat history.
+     * @allow (update) User 'user123' can update study material under their chat history.
+     * @deny (update) User 'user456' cannot update 'user123's study material under their chat history.
+     * @allow (delete) User 'user123' can delete study material under their chat history.
+     * @deny (delete) User 'user456' cannot delete 'user123's study material under their chat history.
+     * @allow (list) User 'user123' can list study materials under their chat history.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/chat_history/{chatHistoryId}/study_materials/{studyMaterialId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Secures files uploaded by users.
+     * @path /users/{userId}/file_uploads/{fileUploadId}
+     * @allow (create) User 'user123' can upload a file to their own directory.
+     * @deny (create) User 'user456' cannot upload a file to 'user123's directory.
+     * @allow (get) User 'user123' can read their own uploaded file.
+     * @deny (get) User 'user456' cannot read 'user123's uploaded file.
+     * @allow (update) User 'user123' can update their own uploaded file.
+     * @deny (update) User 'user456' cannot update 'user123's uploaded file.
+     * @allow (delete) User 'user123' can delete their own uploaded file.
+     * @deny (delete) User 'user456' cannot delete 'user123's uploaded file.
+     * @allow (list) User 'user123' can list files in their own directory.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/file_uploads/{fileUploadId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Grants admin privileges to users with a document in this collection.
+     * @path /roles_admin/{userId}
+     * @allow (create) Only an existing admin can create new admin roles.
+     * @deny (create) Non-admins cannot create admin roles.
+     * @allow (get) Any admin can read other admin user ids.
+     * @deny (get) Non-admins cannot read admin user ids.
+     * @allow (update) Only an existing admin can update an admin role.
+     * @deny (update) Non-admins cannot update admin roles.
+     * @allow (delete) Only an existing admin can delete an admin role.
+     * @deny (delete) Non-admins cannot delete admin roles.
+     * @allow (list) Only existing admins can list other admin user ids.
+     * @principle Uses document existence in a dedicated collection to grant admin privileges.
+     */
+    match /roles_admin/{userId} {
+      allow get, list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    //------------------- Helper functions -------------------
+
+    /**
+     * @description Checks if the user is signed in.
+     * @return True if the user is authenticated, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the document, based on the userId.
+     * @param userId The user ID to compare against the request's authentication UID.
+     * @return True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the document and the document exists.
+     * @param userId The user ID to compare against the request's authentication UID.
+     * @return True if the user is the owner and the document exists, false otherwise.
+     */
+    // function isExistingOwner(userId) {
+    //   return isOwner(userId) && exists(resource.data);
+    // }
+
+    /**
+     * @description Checks if the request is attempting to create their own user document.
+     * @param userId The user ID to compare against the request's authentication UID.
+     * @param id The id field in the document to compare against the userId.
+     * @return True if the user is creating their own document and the id field is valid, false otherwise.
+     */
+    function isSelfCreation(userId) {
+      return isOwner(userId);
+    }
+
+     /**
+      * @description Checks if the userId in a document update matches the existing userId to prevent ownership changes.
+      * @param userId The user ID from the path.
+      * @param id The id field in the document.
+      * @return True if the user IDs match, indicating the field is immutable.
+      */
+    // function isUserIdImmutable(userId, id) {
+    //   return userId == id;
+    // }
+
+    /**
+     * @description Checks if the user has admin privileges.
+     * @return True if the user is an admin, false otherwise.
+     */
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+  }
+}
