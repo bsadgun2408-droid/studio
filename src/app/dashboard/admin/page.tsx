@@ -80,12 +80,12 @@ export default function AdminPage() {
 
   // Redirect if user is not the admin
   useEffect(() => {
-    if (!isUserLoading && (!user || user.email !== "sadgun@gmail.com")) {
+    if (!isUserLoading && (!user || user.email !== "bsadgun2408@gmail.com")) {
       router.push("/dashboard");
     }
   }, [user, isUserLoading, router]);
 
-  if (!user || user.email !== "sadgun@gmail.com") {
+  if (!user || user.email !== "bsadgun2408@gmail.com") {
       return null;
   }
   

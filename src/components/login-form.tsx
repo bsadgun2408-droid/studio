@@ -72,12 +72,9 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setUnverifiedUser(null);
     try {
-      if (values.email === "sadgun" && values.password === "240810@8519995295") {
-          values.email = "sadgun@gmail.com";
-      }
       const userCredential = await signInWithEmailAndPassword(values.email, values.password);
       if (userCredential) {
-        if (!userCredential.user.emailVerified && values.email !== "sadgun@gmail.com") {
+        if (!userCredential.user.emailVerified && values.email !== "bsadgun2408@gmail.com") {
           setUnverifiedUser(userCredential.user);
           toast({
             title: "Email Not Verified",
@@ -90,7 +87,7 @@ export function LoginForm() {
           return;
         }
 
-        if(values.email === "sadgun@gmail.com") {
+        if(values.email === "bsadgun2408@gmail.com") {
           router.push("/dashboard/admin");
         } else {
           router.push("/dashboard");
@@ -147,9 +144,9 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email or Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com or sadgun" {...field} />
+                    <Input placeholder="name@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

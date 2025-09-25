@@ -87,7 +87,7 @@ export default function DashboardPage() {
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-            {user && user.email === 'sadgun@gmail.com' && (
+            {user && user.email === 'bsadgun2408@gmail.com' && (
                <DropdownMenuItem onSelect={handleAdminNav}>
                 <Shield className="mr-2 h-4 w-4" />
                 <span>Admin Panel</span>
