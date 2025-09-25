@@ -14,6 +14,11 @@ import {
   FileText,
   X,
   Sparkles,
+  Map,
+  FileCode2,
+  HelpCircle,
+  ListOrdered,
+  Award,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +28,6 @@ import { analyzeUploadedNotes } from '@/ai/flows/analyze-uploaded-notes';
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type Message = {
   sender: 'user';
@@ -215,33 +219,40 @@ export default function DashboardPage() {
     }
   }
 
+  const studyMaterialSections = [
+    { key: 'mindMap', title: 'Mind Map', icon: Map, color: 'text-blue-500' },
+    { key: 'revisionNotes', title: 'Revision Notes', icon: FileCode2, color: 'text-green-500' },
+    { key: 'questionsAndAnswers', title: 'Q&A for Self-Assessment', icon: HelpCircle, color: 'text-yellow-500' },
+    { key: 'keywords', title: 'Keywords & Definitions', icon: ListOrdered, color: 'text-purple-500' },
+    { key: 'cbseMarkingScheme', title: 'CBSE Marking Scheme', icon: Award, color: 'text-red-500' },
+  ];
+
   const renderAiMessage = (content: ChatOutput | string) => {
     if (typeof content === 'string') {
       return <p className="whitespace-pre-wrap">{content}</p>;
     }
+    
     return (
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="mind-map">
-          <AccordionTrigger>Mind Map</AccordionTrigger>
-          <AccordionContent className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">{content.mindMap}</AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="revision-notes">
-          <AccordionTrigger>Revision Notes</AccordionTrigger>
-          <AccordionContent className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">{content.revisionNotes}</AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="qa">
-          <AccordionTrigger>Q&A for Self-Assessment</AccordionTrigger>
-          <AccordionContent className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">{content.questionsAndAnswers}</AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="keywords">
-          <AccordionTrigger>Keywords & Definitions</AccordionTrigger>
-          <AccordionContent className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">{content.keywords}</AccordionContent>
-        </AccordionItem>
-         <AccordionItem value="marking-scheme">
-          <AccordionTrigger>CBSE Marking Scheme</AccordionTrigger>
-          <AccordionContent className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">{content.cbseMarkingScheme}</AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="space-y-4">
+        {studyMaterialSections.map(section => {
+          const sectionContent = content[section.key as keyof ChatOutput];
+          if (!sectionContent) return null;
+
+          const Icon = section.icon;
+
+          return (
+            <Card key={section.key} className="bg-card/50 overflow-hidden">
+              <CardHeader className="flex flex-row items-center gap-3 p-4 bg-muted/50 border-b">
+                <Icon className={`w-6 h-6 ${section.color}`} />
+                <CardTitle className="text-lg">{section.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                {sectionContent}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     );
   };
 
@@ -374,4 +385,5 @@ export default function DashboardPage() {
       </footer>
     </div>
   );
-}
+
+    
