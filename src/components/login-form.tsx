@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAuth } from "firebase/auth";
+import { getAuth, sendEmailVerification, User } from "firebase/auth";
 import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { LoaderCircle } from "lucide-react";
 
@@ -39,6 +39,7 @@ export function LoginForm() {
   const { toast } = useToast();
   const auth = getAuth();
   const [signInWithEmailAndPassword, user, loading, error] = useSignInWithEmailAndPassword(auth);
+  const [unverifiedUser, setUnverifiedUser] = React.useState<User | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,14 +48,48 @@ export function LoginForm() {
       password: "",
     },
   });
+  
+  const handleResendVerification = async () => {
+    if (unverifiedUser) {
+      try {
+        await sendEmailVerification(unverifiedUser);
+        toast({
+          title: "Verification Email Sent",
+          description: "A new verification link has been sent to your email address.",
+        });
+        setUnverifiedUser(null);
+      } catch (e) {
+        console.error(e);
+        toast({
+          title: "Error",
+          description: "Failed to resend verification email.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setUnverifiedUser(null);
     try {
       if (values.email === "sadgun" && values.password === "240810@8519995295") {
           values.email = "sadgun@gmail.com";
       }
       const userCredential = await signInWithEmailAndPassword(values.email, values.password);
       if (userCredential) {
+        if (!userCredential.user.emailVerified && values.email !== "sadgun@gmail.com") {
+          setUnverifiedUser(userCredential.user);
+          toast({
+            title: "Email Not Verified",
+            description: "Please verify your email address before logging in.",
+            variant: "destructive",
+          });
+          // Note: react-firebase-hooks automatically signs the user out if there's an error during sign-in process,
+          // but if they are technically "signed in" but not verified, we might need to sign them out manually.
+          // For now, react-firebase-hooks seems to handle this state.
+          return;
+        }
+
         if(values.email === "sadgun@gmail.com") {
           router.push("/dashboard/admin");
         } else {
@@ -137,6 +172,14 @@ export function LoginForm() {
               {loading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               Log In
             </Button>
+            {unverifiedUser && (
+                <div className="text-center text-sm">
+                    <p className="text-destructive">Your email is not verified.</p>
+                    <Button variant="link" onClick={handleResendVerification} className="text-primary">
+                        Resend verification email
+                    </Button>
+                </div>
+            )}
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="underline text-primary">

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAuth, sendEmailVerification } from "firebase/auth";
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
-import { doc, setDoc, getFirestore } from 'firebase/firestore';
+import { doc, setDoc, getFirestore, getDocs, collection, query, where } from 'firebase/firestore';
 import { LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,20 @@ export function SignupForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      // Check if username already exists
+      const usersRef = collection(firestore, "users");
+      const q = query(usersRef, where("name", "==", values.name));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        toast({
+          title: "Registration Failed",
+          description: "This username is already taken. Please choose another one.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const newUser = await createUserWithEmailAndPassword(values.email, values.password);
       if (newUser) {
         await sendEmailVerification(newUser.user);
@@ -72,7 +86,8 @@ export function SignupForm() {
             name: values.name,
             email: values.email,
             isBanned: false,
-            createdAt: new Date()
+            createdAt: new Date(),
+            isVerified: false // Explicitly set verification status
         });
 
         toast({
