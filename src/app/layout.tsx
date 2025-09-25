@@ -35,8 +35,10 @@ export default function RootLayout({
         )}
       >
         <FirebaseClientProvider>
+          <div className="flex flex-col h-screen">
             {children}
-            <Toaster />
+          </div>
+          <Toaster />
         </FirebaseClientProvider>
       </body>
     </html>

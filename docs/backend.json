@@ -9,47 +9,10 @@
         "id": {
           "type": "string",
           "description": "Unique identifier for the user."
-        },
-        "username": {
-          "type": "string",
-          "description": "User's unique username for login."
-        },
-        "password": {
-          "type": "string",
-          "description": "User's password for login. Stored securely (e.g., hashed)."
-        },
-        "email": {
-          "type": "string",
-          "description": "User's email address for communication.",
-          "format": "email"
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "Date and time when the user registered.",
-          "format": "date-time"
-        },
-        "isBanned": {
-          "type": "boolean",
-          "description": "Indicates whether the user is banned from accessing the application."
-        },
-        "verificationCode": {
-          "type": "string",
-          "description": "Verification code sent to the user during registration."
-        },
-        "isVerified": {
-          "type": "boolean",
-          "description": "Indicates whether the user has verified their account."
         }
       },
       "required": [
-        "id",
-        "username",
-        "password",
-        "email",
-        "registrationDate",
-        "isBanned",
-        "verificationCode",
-        "isVerified"
+        "id"
       ]
     },
     "ChatHistory": {
@@ -180,42 +143,10 @@
         "uploadTimestamp",
         "fileContent"
       ]
-    },
-    "Admin": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Admin",
-      "type": "object",
-      "description": "Represents an admin user with access to manage users and system settings.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the admin user."
-        },
-        "username": {
-          "type": "string",
-          "description": "Admin's username for login."
-        },
-        "password": {
-          "type": "string",
-          "description": "Admin's password for login, stored securely (e.g., hashed)."
-        },
-        "email": {
-          "type": "string",
-          "description": "Admin's email address for communication.",
-          "format": "email"
-        }
-      },
-      "required": [
-        "id",
-        "username",
-        "password",
-        "email"
-      ]
     }
   },
   "auth": {
     "providers": [
-      "password",
       "anonymous"
     ]
   },
@@ -228,7 +159,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user account information.  Each document represents a registered user. Includes fields like username, password (hashed), email, registration date, ban status, verification code, and verification status.",
+          "description": "Stores user account information for anonymous users.",
           "params": [
             {
               "name": "userId",
@@ -244,7 +175,7 @@
           "schema": {
             "$ref": "#/backend/entities/ChatHistory"
           },
-          "description": "Stores chat history for each user. Includes the user's message, AI response, timestamp, and IDs of uploaded files.",
+          "description": "Stores chat history for each user. Includes the user's message, AI response, and timestamp.",
           "params": [
             {
               "name": "userId",
@@ -300,24 +231,7 @@
             }
           ]
         }
-      },
-      {
-        "path": "/roles_admin/{userId}",
-        "definition": {
-          "entityName": "Admin",
-          "schema": {
-            "$ref": "#/backend/entities/Admin"
-          },
-          "description": "Collection indicating admin privileges. The existence of a document in this collection grants admin rights to the corresponding user ID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the admin user."
-            }
-          ]
-        }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and debuggability, adhering to the core principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters). Authorization Independence is achieved through denormalization. For instance, access control data for chat histories is embedded within the chat history documents themselves, eliminating the need for complex `get()` calls in security rules.\n\nStructural Segregation is applied by separating user data (private) from admin data. User-owned data (chat histories, study materials, and file uploads) are stored in hierarchical paths under the `/users/{userId}` collection, enabling simple path-based security rules. Collaborative data is managed using membership maps where applicable (though not explicitly needed in this scenario). Global roles (admin) are managed using a dedicated collection (`/roles_admin/{uid}`), relying on document existence for role assignment.\n\nThe structure supports the required QAPs by utilizing structural segregation. User-specific data is kept separate, ensuring that `list` operations are secure and do not expose unauthorized data. Admin roles are clearly defined, allowing for secure management of users.\n\nExplicit state modeling is used with the `isBanned` and `isVerified` fields in the `User` entity. Predictable schemas are enforced, and naming conventions are consistent throughout the database structure. This approach simplifies security rules, enhances debuggability, and ensures the integrity of ownership and timestamps."
+    ]
   }
 }
