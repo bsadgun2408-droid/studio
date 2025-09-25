@@ -45,18 +45,19 @@ export function DashboardNav() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  isActive={pathname === item.href}
-                  tooltip={{ children: item.label, className: "bg-accent text-accent-foreground" }}
-                  className={cn(
-                    "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
-                  )}
-                >
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={{ children: item.label, className: "bg-accent text-accent-foreground" }}
+                className={cn(
+                  "data-[active=true]:bg-accent data-[active=true]:text-accent-foreground"
+                )}
+              >
+                <Link href={item.href}>
                   <item.icon />
                   <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
