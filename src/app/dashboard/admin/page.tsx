@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { getAuth, signOut } from "firebase/auth";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 type UserData = {
   uid: string;
@@ -39,23 +41,34 @@ export default function AdminPage() {
     router.push('/');
   };
 
-  const handleToggleBan = async (uid: string, isBanned: boolean) => {
+  const handleToggleBan = (uid: string, isBanned: boolean) => {
     if (!firestore) return;
     const userRef = doc(firestore, "users", uid);
-    try {
-      await updateDoc(userRef, { isBanned: !isBanned });
-      toast({
-        title: "Success",
-        description: `User has been ${!isBanned ? 'banned' : 'unbanned'}.`,
+    const newBanState = !isBanned;
+
+    updateDoc(userRef, { isBanned: newBanState })
+      .then(() => {
+        toast({
+          title: "Success",
+          description: `User has been ${newBanState ? 'banned' : 'unbanned'}.`,
+        });
+      })
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'update',
+          requestResourceData: { isBanned: newBanState },
+        });
+
+        errorEmitter.emit('permission-error', permissionError);
+
+        // Also show a toast to the user.
+        toast({
+            title: "Error",
+            description: "Failed to update user status. You may not have permission.",
+            variant: "destructive",
+        });
       });
-    } catch (error) {
-      console.error("Failed to update user status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user status.",
-        variant: "destructive",
-      });
-    }
   };
 
   if (isUserLoading || usersLoading) {
