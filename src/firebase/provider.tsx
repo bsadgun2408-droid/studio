@@ -162,7 +162,7 @@ export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | 
   if(typeof memoized !== 'object' || memoized === null) return memoized;
   (memoized as MemoFirebase<T>).__memo = true;
   
-  return memoized;
+  return memoized as MemoFirebase<T>;
 }
 
 /**

@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
-import { useCollection } from "@/firebase";
-import { useUser } from "@/firebase";
+import { useCollection, useUser, useMemoFirebase } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Ban, CheckCircle, Shield, LogOut, Home } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -28,12 +27,12 @@ export default function AdminPage() {
   const { toast } = useToast();
   const firestore = getFirestore();
   
-  const usersCollection = useMemo(() => {
+  const usersCollection = useMemoFirebase(() => {
       if (!firestore) return null;
       return collection(firestore, "users")
   }, [firestore]);
 
-  const { data: users, isLoading: usersLoading, error } = useCollection<UserData>(usersCollection as any);
+  const { data: users, isLoading: usersLoading, error } = useCollection<UserData>(usersCollection);
 
   const handleSignOut = async () => {
     const auth = getAuth();
