@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"];
 
@@ -81,13 +83,28 @@ export function SignupForm() {
         
         // Store user info in Firestore
         const userRef = doc(firestore, "users", newUser.user.uid);
-        await setDoc(userRef, {
+        const userData = {
             uid: newUser.user.uid,
             name: values.name,
             email: values.email,
             isBanned: false,
             createdAt: new Date(),
             isVerified: false // Explicitly set verification status
+        };
+
+        setDoc(userRef, userData).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: userRef.path,
+              operation: 'create',
+              requestResourceData: userData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+
+            toast({
+                title: "Registration Error",
+                description: "Could not save user profile. You may not have permission.",
+                variant: "destructive",
+            });
         });
 
         toast({
@@ -97,10 +114,16 @@ export function SignupForm() {
         router.push("/");
       }
     } catch (e) {
-      console.error(e);
+       let errorMessage = "An unexpected error occurred during registration.";
+        if (e instanceof Error && 'code' in e) {
+            const firebaseError = e as { code: string };
+            if (firebaseError.code === 'auth/email-already-in-use') {
+                errorMessage = "This email is already registered. Please log in or use a different email."
+            }
+        }
        toast({
         title: "Registration Failed",
-        description: "An unexpected error occurred during registration.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -162,6 +185,7 @@ export function SignupForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
+
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
