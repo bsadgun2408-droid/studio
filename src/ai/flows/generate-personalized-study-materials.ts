@@ -39,12 +39,6 @@ export type GeneratePersonalizedStudyMaterialsOutput = z.infer<
   typeof GeneratePersonalizedStudyMaterialsOutputSchema
 >;
 
-export async function generatePersonalizedStudyMaterials(
-  input: GeneratePersonalizedStudyMaterialsInput
-): Promise<GeneratePersonalizedStudyMaterialsOutput> {
-  return generatePersonalizedStudyMaterialsFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'generatePersonalizedStudyMaterialsPrompt',
   input: {schema: GeneratePersonalizedStudyMaterialsInputSchema},
@@ -69,16 +63,10 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const generatePersonalizedStudyMaterialsFlow = ai.defineFlow(
-  {
-    name: 'generatePersonalizedStudyMaterialsFlow',
-    inputSchema: GeneratePersonalizedStudyMaterialsInputSchema,
-    outputSchema: GeneratePersonalizedStudyMaterialsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
 
-    
+export async function generatePersonalizedStudyMaterials(
+  input: GeneratePersonalizedStudyMaterialsInput
+): Promise<GeneratePersonalizedStudyMaterialsOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}
