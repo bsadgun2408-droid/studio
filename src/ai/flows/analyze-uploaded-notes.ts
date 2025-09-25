@@ -61,5 +61,5 @@ Answer: `},
     }
   });
 
-  return llmResponse.output()!;
+  return llmResponse.output!;
 }

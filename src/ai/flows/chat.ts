@@ -40,7 +40,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
             schema: ChatOutputSchema,
         },
       });
-      return llmResponse.output()!;
+      return llmResponse.output!;
     }
   );
   return await prompt(input);
