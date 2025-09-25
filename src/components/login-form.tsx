@@ -86,6 +86,8 @@ export function LoginForm() {
         let errorMessage = "An unknown error occurred.";
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
           errorMessage = "Invalid email or password. Please try again.";
+        } else if (error.code === 'auth/user-disabled') {
+            errorMessage = "This account has been disabled by an administrator."
         }
         toast({
             title: "Login Failed",
@@ -110,9 +112,9 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email or Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input placeholder="name@example.com or sadgun" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

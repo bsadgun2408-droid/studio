@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -23,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-const allowedDomains = ["gmail.com", "microsoft.com", "yahoo.com"];
+const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"];
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -35,7 +36,7 @@ const formSchema = z.object({
     const domain = email.split('@')[1];
     return allowedDomains.includes(domain);
   }, {
-    message: "Only gmail.com, microsoft.com, and yahoo.com emails are allowed."
+    message: "This email domain is not allowed. Please use a valid provider."
   }),
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
@@ -92,9 +93,13 @@ export function SignupForm() {
 
   React.useEffect(() => {
     if (error) {
+        let errorMessage = "An unknown error occurred.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "This email is already registered. Please log in or use a different email."
+        }
         toast({
             title: "Registration Failed",
-            description: error.message,
+            description: errorMessage,
             variant: "destructive",
         });
     }

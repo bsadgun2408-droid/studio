@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { getFirestore, collection, doc, updateDoc } from "firebase/firestore";
+import { useEffect, useState, useMemo } from "react";
+import { collection, doc, updateDoc, getFirestore } from "firebase/firestore";
+import { useCollection } from "@/firebase";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Ban, CheckCircle, Shield, LogOut, Home } from "lucide-react";
@@ -25,16 +25,13 @@ export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = getFirestore();
-  const [users, setUsers] = useState<UserData[]>([]);
   
-  const [value, loading, error] = useCollection(collection(firestore, "users"));
+  const usersCollection = useMemo(() => {
+      if (!firestore) return null;
+      return collection(firestore, "users")
+  }, [firestore]);
 
-  useEffect(() => {
-    if (value) {
-      const usersData = value.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as UserData));
-      setUsers(usersData);
-    }
-  }, [value]);
+  const { data: users, isLoading: usersLoading, error } = useCollection<UserData>(usersCollection as any);
 
   const handleSignOut = async () => {
     const auth = getAuth();
@@ -43,10 +40,10 @@ export default function AdminPage() {
   };
 
   const handleToggleBan = async (uid: string, isBanned: boolean) => {
+    if (!firestore) return;
     const userRef = doc(firestore, "users", uid);
     try {
       await updateDoc(userRef, { isBanned: !isBanned });
-      setUsers(users.map(u => u.uid === uid ? { ...u, isBanned: !isBanned } : u));
       toast({
         title: "Success",
         description: `User has been ${!isBanned ? 'banned' : 'unbanned'}.`,
@@ -61,7 +58,7 @@ export default function AdminPage() {
     }
   };
 
-  if (isUserLoading || loading) {
+  if (isUserLoading || usersLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -69,9 +66,15 @@ export default function AdminPage() {
     );
   }
 
+  // Redirect if user is not the admin
+  useEffect(() => {
+    if (!isUserLoading && (!user || user.email !== "sadgun@gmail.com")) {
+      router.push("/dashboard");
+    }
+  }, [user, isUserLoading, router]);
+
   if (!user || user.email !== "sadgun@gmail.com") {
-    router.push("/dashboard");
-    return null;
+      return null;
   }
   
   return (
@@ -110,7 +113,7 @@ export default function AdminPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((u) => (
+              {users && users.map((u) => (
                 <TableRow key={u.uid}>
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
