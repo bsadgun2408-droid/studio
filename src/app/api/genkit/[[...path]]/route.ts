@@ -1,6 +1,6 @@
-import {defineNextHandler} from '@genkit-ai/next';
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+import { createApp } from '@genkit-ai/next';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 import { config } from 'dotenv';
 import '@/ai/flows';
 
@@ -16,5 +16,6 @@ export const ai = genkit({
   model: 'googleai/gemini-2.5-flash',
 });
 
+const { GET, POST } = createApp({ ai });
 
-export const {GET, POST} = defineNextHandler({ai});
+export { GET, POST };
