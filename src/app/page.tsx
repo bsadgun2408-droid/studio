@@ -205,9 +205,8 @@ export default function DashboardPage() {
           return `User: ${m.text}`;
         } else if (m.sender === 'ai' && typeof m.content === 'string') {
           return `AI: ${m.content}`;
-        } else if (m.sender === 'ai') {
-          // For complex AI content, we'll just summarize it for history context
-          return `AI: [Generated Study Materials]`;
+        } else if (m.sender === 'ai' && typeof m.content === 'object') {
+          return `AI: ${JSON.stringify(m.content)}`;
         }
         return ''; // Ignore file messages in history
       })
