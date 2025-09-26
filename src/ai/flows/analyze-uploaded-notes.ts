@@ -29,11 +29,14 @@ export type AnalyzeUploadedNotesOutput = z.infer<typeof AnalyzeUploadedNotesOutp
 export async function analyzeUploadedNotes(
   input: AnalyzeUploadedNotesInput
 ): Promise<AnalyzeUploadedNotesOutput> {
-  const prompt = ai.definePrompt({
-    name: 'analyzeUploadedNotesPrompt',
-    input: {schema: AnalyzeUploadedNotesInputSchema},
-    output: {schema: AnalyzeUploadedNotesOutputSchema},
-    prompt: `You are an expert AI tutor specialized in the Class 10 CBSE curriculum and general education topics.
+  return analyzeUploadedNotesFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'analyzeUploadedNotesPrompt',
+  input: {schema: AnalyzeUploadedNotesInputSchema},
+  output: {schema: AnalyzeUploadedNotesOutputSchema},
+  prompt: `You are an expert AI tutor specialized in the Class 10 CBSE curriculum and general education topics.
 
 You will analyze the content of the uploaded notes and answer the question based on the information provided in the notes.
 
@@ -41,25 +44,17 @@ Uploaded Notes: {{media url=notesDataUri}}
 
 Question: {{{question}}}
 
-Answer: `,
-  });
+Answer the question based *only* on the provided notes.`,
+});
 
-  const llmResponse = await ai.generate({
-    prompt: [
-        {text: `You are an expert AI tutor specialized in the Class 10 CBSE curriculum and general education topics.
-
-You will analyze the content of the uploaded notes and answer the question based on the information provided in the notes.
-
-Question: ${input.question}
-
-Answer: `},
-        {media: {url: input.notesDataUri}}
-    ],
-    model: 'googleai/gemini-2.5-flash',
-    output: {
-        schema: AnalyzeUploadedNotesOutputSchema
-    }
-  });
-
-  return llmResponse.output!;
-}
+const analyzeUploadedNotesFlow = ai.defineFlow(
+  {
+    name: 'analyzeUploadedNotesFlow',
+    inputSchema: AnalyzeUploadedNotesInputSchema,
+    outputSchema: AnalyzeUploadedNotesOutputSchema,
+  },
+  async (input) => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);
