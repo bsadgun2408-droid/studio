@@ -30,6 +30,8 @@ const ChatOutputSchema = z.object({
     .describe('Relevant questions and answers for self-assessment in markdown format.'),
   keywords: z.string().describe('A list of important keywords and their definitions.'),
   cbseMarkingScheme: z.string().describe('An example marking scheme based on CBSE guidelines for a sample question from the conversation.'),
+  mnemonics: z.string().describe('Mnemonics to help remember key concepts.'),
+  pyqs: z.string().describe('Previous Year Questions (PYQs) related to the topic.'),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
@@ -45,6 +47,8 @@ const prompt = ai.definePrompt({
   - Relevant questions and answers for self-assessment based on the prompt.
   - A list of important keywords and their definitions from the prompt's topics.
   - An example marking scheme based on CBSE guidelines for a relevant question from the conversation.
+  - Mnemonics to help remember key concepts.
+  - Previous Year Questions (PYQs) related to the topic.
 
   User's Latest Prompt: {{{prompt}}}
   Conversation History: {{{conversationHistory}}}
