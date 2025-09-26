@@ -77,15 +77,20 @@ export const chatFlow = ai.defineFlow(
   },
   async (input) => {
     const response = await chatPrompt(input);
-    const toolChoice = response.choices.find(c => c.toolRequest);
     
+    // If output exists, the model has generated the structured data directly.
+    if (response.output) {
+      return response.output;
+    }
+
+    // If output doesn't exist, the model has decided to use a tool.
+    const toolChoice = response.choices.find(c => c.toolRequest);
     if (toolChoice) {
-      // The model decided to use the tool. We will return a simple answer structure.
-      const toolResponse = await response.choices[0].generate();
+      const toolResponse = await toolChoice.generate();
       return toolResponse.output as ChatOutput;
     }
     
-    // The model decided to generate study materials.
-    return response.output!;
+    // Fallback if something unexpected happens.
+    throw new Error("Unexpected response from AI model.");
   }
 );
