@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -15,14 +16,14 @@ const AnalyzeUploadedNotesInputSchema = z.object({
   notesDataUri: z
     .string()
     .describe(
-      "The uploaded notes as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "The uploaded notes or image as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  question: z.string().describe('The question about the uploaded notes.'),
+  question: z.string().describe('The question about the uploaded content.'),
 });
 export type AnalyzeUploadedNotesInput = z.infer<typeof AnalyzeUploadedNotesInputSchema>;
 
 const AnalyzeUploadedNotesOutputSchema = z.object({
-  answer: z.string().describe('The answer to the question based on the uploaded notes.'),
+  answer: z.string().describe('The answer to the question based on the uploaded content.'),
 });
 export type AnalyzeUploadedNotesOutput = z.infer<typeof AnalyzeUploadedNotesOutputSchema>;
 
@@ -38,13 +39,13 @@ const prompt = ai.definePrompt({
   output: {schema: AnalyzeUploadedNotesOutputSchema},
   prompt: `You are an expert AI tutor specialized in the Class 10 CBSE curriculum and general education topics.
 
-You will analyze the content of the uploaded notes and answer the question based on the information provided in the notes.
+You will analyze the content of the uploaded document or image and answer the question based on the information provided.
 
-Uploaded Notes: {{media url=notesDataUri}}
+Uploaded Content: {{media url=notesDataUri}}
 
 Question: {{{question}}}
 
-Answer the question based *only* on the provided notes.`,
+Answer the question based *only* on the provided content.`,
 });
 
 const analyzeUploadedNotesFlow = ai.defineFlow(

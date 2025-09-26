@@ -219,6 +219,9 @@ export default function DashboardPage() {
       ]);
     } finally {
       setIsLoading(false);
+      if (uploadedFile) {
+        removeFile();
+      }
     }
   }
 
@@ -351,7 +354,7 @@ export default function DashboardPage() {
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              accept=".txt,.md,.pdf,.doc,.docx"
+              accept=".txt,.md,.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
             />
              <TooltipProvider>
                 <Tooltip>
