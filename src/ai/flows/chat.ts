@@ -5,7 +5,7 @@
  * - chatFlow - A function that handles all chat interactions.
  */
 
-import {ai} from '@/ai/genkit';
+import { ai } from '@/app/api/genkit/[[...path]]/route';
 import {z} from 'genkit';
 import { ChatInputSchema, ChatOutputSchema } from './types';
 import type { ChatOutput } from './types';
