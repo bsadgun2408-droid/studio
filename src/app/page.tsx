@@ -222,8 +222,7 @@ export default function DashboardPage() {
           notesDataUri: uploadedFile.dataUri,
           question: values.prompt,
         });
-        const chatResponse = await chat({ prompt: response.answer, conversationHistory: '' });
-        aiResponse = { sender: 'ai', content: chatResponse };
+        aiResponse = { sender: 'ai', content: response.answer };
       } else {
         const response = await chat({ prompt: values.prompt, conversationHistory });
         aiResponse = { sender: 'ai', content: response };
