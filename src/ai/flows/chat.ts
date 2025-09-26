@@ -9,7 +9,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const ChatInputSchema = z.object({
+export const ChatInputSchema = z.object({
   prompt: z.string().describe("The user's prompt or question."),
   conversationHistory: z
     .string()
@@ -19,7 +19,7 @@ const ChatInputSchema = z.object({
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-const ChatOutputSchema = z.object({
+export const ChatOutputSchema = z.object({
   mindMap: z.string().describe('A mind map summarizing the key concepts in markdown format.'),
   revisionNotes: z
     .string()

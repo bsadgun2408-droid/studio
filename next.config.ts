@@ -30,6 +30,17 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    // This is to fix a build error with @opentelemetry/context-async-hooks
+    // It's a server-side module that shouldn't be bundled in the client.
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        async_hooks: false,
+      };
+    }
+    return config;
+  }
 };
 
 export default nextConfig;
