@@ -27,7 +27,8 @@ import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { runChatFlow, ChatOutput } from './actions';
+import { runChatFlow } from './actions';
+import type { ChatOutput } from './types';
 
 
 type Message = {
