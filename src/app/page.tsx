@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, ChangeEvent, useEffect } from 'react';
@@ -13,7 +12,6 @@ import {
   Download,
   BookOpenCheck,
   FileText,
-  X,
   Map,
   FileCode2,
   HelpCircle,
@@ -25,12 +23,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChatOutput } from '@/ai/flows/types';
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { runChatFlow } from './actions';
+import { runChatFlow, ChatOutput } from './actions';
 
 
 type Message = {
