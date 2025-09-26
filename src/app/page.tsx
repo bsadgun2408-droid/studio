@@ -24,12 +24,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { chat, ChatOutput } from '@/ai/flows/chat';
-import { analyzeUploadedNotes } from '@/ai/flows/analyze-uploaded-notes';
+import { ChatOutput } from '@/ai/flows/chat';
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { runAction } from '@genkit-ai/next/client';
+import { analyzeUploadedNotesFlow, chatFlow } from '@/ai/flows';
 
 
 type Message = {
@@ -217,13 +218,13 @@ export default function DashboardPage() {
     try {
       let aiResponse: Message;
       if (uploadedFile) {
-        const response = await analyzeUploadedNotes({
+        const response = await runAction(analyzeUploadedNotesFlow, {
           notesDataUri: uploadedFile.dataUri,
           question: values.prompt,
         });
         aiResponse = { sender: 'ai', content: response.answer };
       } else {
-        const response = await chat({ prompt: values.prompt, conversationHistory });
+        const response = await runAction(chatFlow, { prompt: values.prompt, conversationHistory });
         aiResponse = { sender: 'ai', content: response };
       }
       setMessages(prev => [...prev, aiResponse]);

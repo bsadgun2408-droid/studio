@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview This flow generates personalized study materials for every user prompt.
  *
@@ -59,7 +58,14 @@ const prompt = ai.definePrompt({
   `,
 });
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const {output} = await prompt(input);
-  return output!;
-}
+export const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

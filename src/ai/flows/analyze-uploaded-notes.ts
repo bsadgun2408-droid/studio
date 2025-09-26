@@ -1,6 +1,3 @@
-
-'use server';
-
 /**
  * @fileOverview This flow analyzes student-uploaded notes and answers questions based on the content.
  *
@@ -12,7 +9,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const AnalyzeUploadedNotesInputSchema = z.object({
+export const AnalyzeUploadedNotesInputSchema = z.object({
   notesDataUri: z
     .string()
     .describe(
@@ -22,16 +19,11 @@ const AnalyzeUploadedNotesInputSchema = z.object({
 });
 export type AnalyzeUploadedNotesInput = z.infer<typeof AnalyzeUploadedNotesInputSchema>;
 
-const AnalyzeUploadedNotesOutputSchema = z.object({
+export const AnalyzeUploadedNotesOutputSchema = z.object({
   answer: z.string().describe('The answer to the question based on the uploaded content.'),
 });
 export type AnalyzeUploadedNotesOutput = z.infer<typeof AnalyzeUploadedNotesOutputSchema>;
 
-export async function analyzeUploadedNotes(
-  input: AnalyzeUploadedNotesInput
-): Promise<AnalyzeUploadedNotesOutput> {
-  return analyzeUploadedNotesFlow(input);
-}
 
 const prompt = ai.definePrompt({
   name: 'analyzeUploadedNotesPrompt',
@@ -48,7 +40,7 @@ Question: {{{question}}}
 Answer the question based *only* on the provided content.`,
 });
 
-const analyzeUploadedNotesFlow = ai.defineFlow(
+export const analyzeUploadedNotesFlow = ai.defineFlow(
   {
     name: 'analyzeUploadedNotesFlow',
     inputSchema: AnalyzeUploadedNotesInputSchema,
