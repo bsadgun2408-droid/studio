@@ -15,7 +15,6 @@ const ai = genkit({
   logLevel: 'warn',
   traceStore: 'noop',
   flowStore: 'noop',
-  model: 'googleai/gemini-2.5-flash',
 });
 
 
@@ -86,7 +85,7 @@ const chatPrompt = ai.definePrompt({
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [analyzeNotesTool],
-
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `You are an expert AI tutor for the Class 10 CBSE curriculum. Your capabilities are:
 1.  **Generate Study Materials:** If the user asks a general question or wants to learn about a topic, you MUST generate a comprehensive set of study materials.
 2.  **Answer from Notes:** If the user has uploaded a document (notes) and asks a question about it, you MUST use the 'analyzeUploadedNotes' tool to answer ONLY from the provided document. When using the tool, provide just the answer without any extra study materials.
