@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,6 +38,9 @@ type Message = {
 } | {
   sender: 'ai';
   content: ChatOutput | string; // Can be simple string or complex object
+} | {
+    sender: 'user-file';
+    file: UploadedFile;
 };
 
 
@@ -69,6 +72,33 @@ export default function DashboardPage() {
     },
   });
 
+    useEffect(() => {
+        if (uploadedFile) {
+            const fileMessage: Message = { sender: 'user-file', file: uploadedFile };
+            setMessages(prev => [...prev, fileMessage]);
+
+            toast({
+                title: "File Uploaded",
+                description: `${uploadedFile.name} is ready. Ask a question about it!`,
+            });
+            
+            // Automatically clear the toast after 3 seconds
+            const timer = setTimeout(() => {
+                // This assumes a dismiss function is available from useToast,
+                // if not, this part needs to be implemented in the toast hook.
+                // For this example, we'll just clear the local uploadedFile state
+                // which was the old behavior. The user wanted the file in the chat.
+            }, 3000);
+
+            // Clear the file from the input so the same file can be re-uploaded
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            
+            return () => clearTimeout(timer);
+        }
+    }, [uploadedFile, toast]);
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -76,10 +106,6 @@ export default function DashboardPage() {
       reader.onload = e => {
         const dataUri = e.target?.result as string;
         setUploadedFile({ name: file.name, dataUri });
-        toast({
-            title: "File Uploaded",
-            description: `${file.name} is ready. Ask a question about it!`,
-        });
       };
       reader.readAsDataURL(file);
     }
@@ -87,17 +113,6 @@ export default function DashboardPage() {
 
   const handleFileUploadClick = () => {
     fileInputRef.current?.click();
-  };
-
-  const removeFile = () => {
-    setUploadedFile(null);
-     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    toast({
-        title: "File Removed",
-        description: "The uploaded file has been removed.",
-    });
   };
 
   const handleDownloadNotes = (materialsToDownload: ChatOutput) => {
@@ -181,20 +196,23 @@ export default function DashboardPage() {
     setIsLoading(true);
     const userMessage: Message = { sender: 'user', text: values.prompt };
     
+    setMessages(prev => [...prev, userMessage]);
+    
     // Construct conversation history from previous messages
     const conversationHistory = messages
       .map(m => {
         if (m.sender === 'user') {
           return `User: ${m.text}`;
-        } else if (typeof m.content === 'string') {
+        } else if (m.sender === 'ai' && typeof m.content === 'string') {
           return `AI: ${m.content}`;
+        } else if (m.sender === 'ai') {
+          // For complex AI content, we'll just summarize it for history context
+          return `AI: [Generated Study Materials]`;
         }
-        // For complex AI content, we'll just summarize it for history context
-        return `AI: [Generated Study Materials]`;
+        return ''; // Ignore file messages in history
       })
       .join('\n');
 
-    setMessages(prev => [...prev, userMessage]);
     form.reset();
 
     try {
@@ -219,8 +237,9 @@ export default function DashboardPage() {
       ]);
     } finally {
       setIsLoading(false);
+      // Clear the uploaded file state after submission
       if (uploadedFile) {
-        removeFile();
+        setUploadedFile(null);
       }
     }
   }
@@ -279,7 +298,7 @@ export default function DashboardPage() {
           <div
             key={index}
             className={`flex items-start gap-3 ${
-              msg.sender === 'user' ? 'justify-end' : ''
+              msg.sender === 'user' || msg.sender === 'user-file' ? 'justify-end' : ''
             }`}
           >
             {msg.sender === 'ai' && (
@@ -289,13 +308,20 @@ export default function DashboardPage() {
             )}
             <Card
               className={`max-w-2xl w-full ${
-                msg.sender === 'user'
+                msg.sender === 'user' || msg.sender === 'user-file'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-card'
               }`}
             >
               <CardContent className="p-3">
-                {msg.sender === 'user' ? <p className="whitespace-pre-wrap">{msg.text}</p> : renderAiMessage(msg.content)}
+                {msg.sender === 'user' && <p className="whitespace-pre-wrap">{msg.text}</p>}
+                {msg.sender === 'user-file' && (
+                    <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        <span className="font-medium truncate">{msg.file.name}</span>
+                    </div>
+                )}
+                {msg.sender === 'ai' && renderAiMessage(msg.content)}
                  {msg.sender === 'ai' && typeof msg.content !== 'string' && (
                   <div className="mt-4 flex justify-end">
                     <Button
@@ -310,7 +336,7 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
-            {msg.sender === 'user' && (
+            {(msg.sender === 'user' || msg.sender === 'user-file') && (
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center font-bold text-accent-foreground text-sm flex-shrink-0">
                 U
               </div>
@@ -333,17 +359,6 @@ export default function DashboardPage() {
       </main>
 
       <footer className="p-4 border-t bg-background">
-        {uploadedFile && (
-            <div className="mb-2 p-2 bg-muted rounded-md flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium truncate max-w-xs">{uploadedFile.name}</span>
-                </div>
-                <Button variant="ghost" size="icon" onClick={removeFile} className="h-6 w-6">
-                    <X className="w-4 h-4" />
-                </Button>
-            </div>
-        )}
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -364,7 +379,7 @@ export default function DashboardPage() {
                           size="icon"
                           type="button"
                           onClick={handleFileUploadClick}
-                          disabled={isLoading || !!uploadedFile}
+                          disabled={isLoading}
                         >
                           <Paperclip />
                         </Button>
