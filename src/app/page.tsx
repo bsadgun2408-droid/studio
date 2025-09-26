@@ -24,13 +24,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChatOutput } from '@/ai/flows/chat';
+import { ChatOutput } from '@/ai/flows/types';
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { runAction } from '@genkit-ai/next/client';
-import { analyzeUploadedNotesFlow, chatFlow } from '@/ai/flows';
+import { runChatFlow } from './actions';
 
 
 type Message = {
@@ -38,7 +37,7 @@ type Message = {
   text: string;
 } | {
   sender: 'ai';
-  content: ChatOutput | string; // Can be simple string or complex object
+  content: ChatOutput | string;
 } | {
     sender: 'user-file';
     file: UploadedFile;
@@ -83,20 +82,9 @@ export default function DashboardPage() {
                 description: `${uploadedFile.name} is ready. Ask a question about it!`,
             });
             
-            // Automatically clear the toast after 3 seconds
-            const timer = setTimeout(() => {
-                // This assumes a dismiss function is available from useToast,
-                // if not, this part needs to be implemented in the toast hook.
-                // For this example, we'll just clear the local uploadedFile state
-                // which was the old behavior. The user wanted the file in the chat.
-            }, 3000);
-
-            // Clear the file from the input so the same file can be re-uploaded
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
-            
-            return () => clearTimeout(timer);
         }
     }, [uploadedFile, toast]);
 
@@ -199,7 +187,6 @@ export default function DashboardPage() {
     
     setMessages(prev => [...prev, userMessage]);
     
-    // Construct conversation history from previous messages
     const conversationHistory = messages
       .map(m => {
         if (m.sender === 'user') {
@@ -209,25 +196,20 @@ export default function DashboardPage() {
         } else if (m.sender === 'ai' && typeof m.content === 'object') {
           return `AI: ${JSON.stringify(m.content)}`;
         }
-        return ''; // Ignore file messages in history
+        return '';
       })
       .join('\n');
 
     form.reset();
 
     try {
-      let aiResponse: Message;
-      if (uploadedFile) {
-        const response = await runAction(analyzeUploadedNotesFlow, {
-          notesDataUri: uploadedFile.dataUri,
-          question: values.prompt,
+        const response = await runChatFlow({ 
+            prompt: values.prompt, 
+            conversationHistory,
+            notesDataUri: uploadedFile?.dataUri,
         });
-        aiResponse = { sender: 'ai', content: response.answer };
-      } else {
-        const response = await runAction(chatFlow, { prompt: values.prompt, conversationHistory });
-        aiResponse = { sender: 'ai', content: response };
-      }
-      setMessages(prev => [...prev, aiResponse]);
+        const aiResponse: Message = { sender: 'ai', content: response };
+        setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Error getting AI response:', error);
       setMessages(prev => [
@@ -236,7 +218,6 @@ export default function DashboardPage() {
       ]);
     } finally {
       setIsLoading(false);
-      // Clear the uploaded file state after submission
       if (uploadedFile) {
         setUploadedFile(null);
       }
@@ -258,6 +239,19 @@ export default function DashboardPage() {
       return <p className="whitespace-pre-wrap">{content}</p>;
     }
     
+    // Handle the case where the AI returns a simple answer instead of study materials
+    if ('answer' in content && typeof content.answer === 'string') {
+        return <p className="whitespace-pre-wrap">{content.answer}</p>;
+    }
+
+    const hasContent = studyMaterialSections.some(section => content[section.key as keyof ChatOutput]);
+    if (!hasContent && 'answer' in content) {
+        return <p className="whitespace-pre-wrap">{content.answer as string}</p>;
+    }
+    if (!hasContent) {
+        return <p className="whitespace-pre-wrap">I was unable to generate study materials for this topic.</p>;
+    }
+
     return (
       <div className="space-y-4">
         {studyMaterialSections.map(section => {
@@ -321,7 +315,7 @@ export default function DashboardPage() {
                     </div>
                 )}
                 {msg.sender === 'ai' && renderAiMessage(msg.content)}
-                 {msg.sender === 'ai' && typeof msg.content !== 'string' && (
+                 {msg.sender === 'ai' && typeof msg.content === 'object' && !('answer' in msg.content) && (
                   <div className="mt-4 flex justify-end">
                     <Button
                       variant="ghost"

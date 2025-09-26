@@ -2,18 +2,7 @@
  * @fileoverview This file exports all the Genkit flows.
  */
 
-import {
-  analyzeUploadedNotesFlow,
-  AnalyzeUploadedNotesInputSchema,
-  AnalyzeUploadedNotesOutputSchema,
-} from './analyze-uploaded-notes';
-import { chatFlow, ChatInputSchema, ChatOutputSchema } from './chat';
-
-export {
-  analyzeUploadedNotesFlow,
-  chatFlow,
-  AnalyzeUploadedNotesInputSchema,
-  AnalyzeUploadedNotesOutputSchema,
-  ChatInputSchema,
-  ChatOutputSchema,
-};
+// This file is a central export point for all flows.
+// Currently, we only have the chat flow.
+export * from './chat';
+export * from './types';
