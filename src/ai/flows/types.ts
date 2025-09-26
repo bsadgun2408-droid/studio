@@ -1,3 +1,4 @@
+
 import {z} from 'genkit';
 
 export const ChatInputSchema = z.object({
@@ -23,7 +24,10 @@ const StudyMaterialsSchema = z.object({
         .string()
 
         .describe('Relevant questions and answers for self-assessment in markdown format.'),
-    keywords: z.string().describe('A list of important keywords and their definitions.'),
+    keywords: z.array(z.object({
+        keyword: z.string().describe("The keyword to be defined."),
+        definition: z.string().describe("The definition of the keyword."),
+    })).describe('A list of important keywords and their definitions.'),
     cbseMarkingScheme: z.string().describe('An example marking scheme based on CBSE guidelines for a sample question from the conversation.'),
     mnemonics: z.string().describe('Mnemonics to help remember key concepts.'),
     pyqs: z.string().describe('Previous Year Questions (PYQs) related to the topic.'),

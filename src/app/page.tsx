@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, ChangeEvent, useEffect } from 'react';
@@ -105,7 +106,7 @@ export default function DashboardPage() {
   };
 
   const handleDownloadNotes = (materialsToDownload: ChatOutput) => {
-    if (!materialsToDownload) {
+    if (!materialsToDownload || typeof materialsToDownload !== 'object' || 'answer' in materialsToDownload) {
         toast({
             variant: "destructive",
             title: "Nothing to Download",
@@ -148,6 +149,7 @@ export default function DashboardPage() {
 
     Object.entries(materialsToDownload).forEach(([key, value]) => {
       if (!value) return; // Skip empty sections
+
         const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
         
         checkNewPage(12); // Space for title
@@ -163,13 +165,22 @@ export default function DashboardPage() {
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
         
-        const textLines = doc.splitTextToSize(value, usableWidth);
-        
-        textLines.forEach((line: string) => {
-            checkNewPage(7); // Height for one line
-            doc.text(line, margin, y);
-            y += 7;
-        });
+        let textToRender = '';
+        if (key === 'keywords' && Array.isArray(value)) {
+            textToRender = value.map(kw => `**${kw.keyword}:** ${kw.definition}`).join('\n\n');
+        } else if (typeof value === 'string') {
+            textToRender = value;
+        }
+
+        if (textToRender) {
+            const textLines = doc.splitTextToSize(textToRender, usableWidth);
+            
+            textLines.forEach((line: string) => {
+                checkNewPage(7); // Height for one line
+                doc.text(line, margin, y);
+                y += 7;
+            });
+        }
 
         y += 10; // Extra space between sections
     });
@@ -244,10 +255,11 @@ export default function DashboardPage() {
         return <p className="whitespace-pre-wrap">{content.answer}</p>;
     }
 
-    const hasContent = studyMaterialSections.some(section => content[section.key as keyof ChatOutput]);
-    if (!hasContent && 'answer' in content) {
-        return <p className="whitespace-pre-wrap">{content.answer as string}</p>;
-    }
+    const hasContent = studyMaterialSections.some(section => {
+        const sectionContent = content[section.key as keyof ChatOutput];
+        return Array.isArray(sectionContent) ? sectionContent.length > 0 : !!sectionContent;
+    });
+
     if (!hasContent) {
         return <p className="whitespace-pre-wrap">I was unable to generate study materials for this topic.</p>;
     }
@@ -260,6 +272,24 @@ export default function DashboardPage() {
 
           const Icon = section.icon;
 
+          let renderedContent;
+          if (section.key === 'keywords' && Array.isArray(sectionContent)) {
+              if (sectionContent.length === 0) return null;
+              renderedContent = (
+                  <ul className="space-y-2">
+                      {sectionContent.map((item, index) => (
+                          <li key={index}>
+                              <strong className="font-semibold">{item.keyword}:</strong> {item.definition}
+                          </li>
+                      ))}
+                  </ul>
+              );
+          } else if (typeof sectionContent === 'string') {
+              renderedContent = sectionContent;
+          } else {
+              return null;
+          }
+
           return (
             <Card key={section.key} className="bg-card/50 overflow-hidden">
               <CardHeader className="flex flex-row items-center gap-3 p-4 bg-muted/50 border-b">
@@ -267,7 +297,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-lg">{section.title}</CardTitle>
               </CardHeader>
               <CardContent className="p-4 prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                {sectionContent}
+                {renderedContent}
               </CardContent>
             </Card>
           );
