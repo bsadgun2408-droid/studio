@@ -9,7 +9,7 @@ import { ChatInputSchema, ChatOutputSchema, type ChatInput, type ChatOutput } fr
 async function callGemini(input: ChatInput): Promise<any> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        throw new Error("GEMINI_API_KEY environment variable not set.");
+        throw new Error("GEMINI_API_KEY environment variable not set. Please add it to your Vercel project settings.");
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;

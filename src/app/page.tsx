@@ -220,9 +220,13 @@ export default function DashboardPage() {
         setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Error getting AI response:', error);
+      let errorMessage = "Sorry, I'm having trouble responding right now.";
+      if (error instanceof Error && error.message.includes("GEMINI_API_KEY")) {
+        errorMessage = "The AI service is not configured. Please add your Gemini API key to your project's environment variables and redeploy.";
+      }
       setMessages(prev => [
         ...prev,
-        { sender: 'ai', content: "Sorry, I'm having trouble responding right now." },
+        { sender: 'ai', content: errorMessage },
       ]);
     } finally {
       setIsLoading(false);
