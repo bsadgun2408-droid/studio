@@ -94,7 +94,7 @@ const chatFlow = ai.defineFlow(
     }
 
     // If output doesn't exist, the model has decided to use a tool.
-    const toolChoice = response.choices.find(c => c.toolRequest);
+    const toolChoice = response.choices?.find(c => c.toolRequest);
     if (toolChoice) {
       const toolResponse = await toolChoice.generate();
       return toolResponse.output as ChatOutput;
