@@ -3,7 +3,6 @@ import {PT_Sans} from 'next/font/google';
 import './globals.css';
 import {cn} from '@/lib/utils';
 import {Toaster} from '@/components/ui/toaster';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
@@ -35,14 +34,14 @@ export default function RootLayout({
           ptSans.variable
         )}
       >
-        <FirebaseClientProvider>
           <div className="flex flex-col h-screen">
             {children}
           </div>
           <Toaster />
-        </FirebaseClientProvider>
         <Analytics />
       </body>
     </html>
   );
 }
+
+    

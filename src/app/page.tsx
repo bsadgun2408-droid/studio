@@ -312,12 +312,6 @@ export default function DashboardPage() {
           <BookOpenCheck className="w-8 h-8 text-primary" />
           <h1 className="text-xl font-bold font-headline">EduVault AI</h1>
         </div>
-        <a href="/dashboard/history">
-            <Button variant="outline">
-                <History className="mr-2 h-4 w-4" />
-                History
-            </Button>
-        </a>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
@@ -456,3 +450,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
