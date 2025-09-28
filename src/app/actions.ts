@@ -3,7 +3,8 @@
  * @fileOverview This file contains the server-side logic for the AI chat functionality.
  */
 import { z } from 'zod';
-import { ChatInputSchema, ChatOutputSchema, type ChatInput, type ChatOutput } from './types';
+import { type ChatInput, type ChatOutput, ChatInputSchema, ChatOutputSchema } from './types';
+
 
 // Simplified function to call Gemini API directly
 async function callGemini(input: ChatInput): Promise<any> {
@@ -12,7 +13,7 @@ async function callGemini(input: ChatInput): Promise<any> {
         throw new Error("GEMINI_API_KEY environment variable not set. Please add it to your Vercel project settings.");
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const studyMaterialsTool = {
         "name": "generateStudyMaterials",
