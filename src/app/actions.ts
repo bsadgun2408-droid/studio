@@ -12,7 +12,7 @@ async function callGemini(input: ChatInput): Promise<any> {
         throw new Error("GEMINI_API_KEY environment variable not set. Please add it to your Vercel project settings.");
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const studyMaterialsTool = {
         "name": "generateStudyMaterials",
